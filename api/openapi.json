@@ -1,0 +1,979 @@
+{
+  "components": {
+    "schemas": {
+      "CreateRadio": {
+        "properties": {
+          "parent_radio_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set for \"keep going\": continues this radio.",
+            "title": "Parent Radio Id"
+          },
+          "seed_song_id": {
+            "$ref": "#/components/schemas/SongId"
+          }
+        },
+        "required": [
+          "seed_song_id"
+        ],
+        "title": "CreateRadio",
+        "type": "object"
+      },
+      "EventBatchResult": {
+        "properties": {
+          "inserted": {
+            "description": "Excludes events whose id was already stored.",
+            "title": "Inserted",
+            "type": "integer"
+          },
+          "received": {
+            "title": "Received",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "received",
+          "inserted"
+        ],
+        "title": "EventBatchResult",
+        "type": "object"
+      },
+      "EventIn": {
+        "properties": {
+          "client_ts": {
+            "format": "date-time",
+            "title": "Client Ts",
+            "type": "string"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Client-generated id; resending the same id is a no-op.",
+            "title": "Id"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Payload",
+            "type": "object"
+          },
+          "position_ms": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Ms"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlaybackProvider"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "radio_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Radio Id"
+          },
+          "radio_position": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RadioPosition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "song_id": {
+            "$ref": "#/components/schemas/SongId"
+          },
+          "type": {
+            "$ref": "#/components/schemas/EventType"
+          }
+        },
+        "required": [
+          "song_id",
+          "type",
+          "client_ts"
+        ],
+        "title": "EventIn",
+        "type": "object"
+      },
+      "EventType": {
+        "enum": [
+          "play_start",
+          "progress",
+          "pause",
+          "seek",
+          "skip",
+          "complete",
+          "like",
+          "unlike",
+          "add_to_library",
+          "ban",
+          "start_radio_from",
+          "unavailable"
+        ],
+        "type": "string"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Me": {
+        "properties": {
+          "consent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "provider_preference": {
+            "$ref": "#/components/schemas/ProviderPreference"
+          }
+        },
+        "required": [
+          "id",
+          "provider_preference",
+          "consent_at",
+          "created_at"
+        ],
+        "title": "Me",
+        "type": "object"
+      },
+      "MeUpdate": {
+        "properties": {
+          "provider_preference": {
+            "$ref": "#/components/schemas/ProviderPreference"
+          }
+        },
+        "required": [
+          "provider_preference"
+        ],
+        "title": "MeUpdate",
+        "type": "object"
+      },
+      "PlaybackProvider": {
+        "enum": [
+          "apple",
+          "youtube"
+        ],
+        "type": "string"
+      },
+      "ProviderPreference": {
+        "enum": [
+          "auto",
+          "apple",
+          "youtube"
+        ],
+        "type": "string"
+      },
+      "Radio": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "parent_radio_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Radio Id"
+          },
+          "seed_song": {
+            "$ref": "#/components/schemas/Song"
+          },
+          "seed_strategy": {
+            "$ref": "#/components/schemas/SeedStrategy"
+          },
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/RadioTrack"
+            },
+            "title": "Tracks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "seed_song",
+          "parent_radio_id",
+          "model_version",
+          "seed_strategy",
+          "created_at",
+          "tracks"
+        ],
+        "title": "Radio",
+        "type": "object"
+      },
+      "RadioPosition": {
+        "maximum": 19.0,
+        "minimum": 0.0,
+        "type": "integer"
+      },
+      "RadioTrack": {
+        "properties": {
+          "position": {
+            "$ref": "#/components/schemas/RadioPosition"
+          },
+          "song": {
+            "$ref": "#/components/schemas/Song"
+          }
+        },
+        "required": [
+          "position",
+          "song"
+        ],
+        "title": "RadioTrack",
+        "type": "object"
+      },
+      "SearchResults": {
+        "properties": {
+          "songs": {
+            "items": {
+              "$ref": "#/components/schemas/Song"
+            },
+            "title": "Songs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "songs"
+        ],
+        "title": "SearchResults",
+        "type": "object"
+      },
+      "SeedStrategy": {
+        "enum": [
+          "direct",
+          "fallback_artist",
+          "fallback_similar_artist",
+          "fallback_genre"
+        ],
+        "type": "string"
+      },
+      "Song": {
+        "properties": {
+          "apple_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Id"
+          },
+          "artist": {
+            "title": "Artist",
+            "type": "string"
+          },
+          "artist_mbid": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artist Mbid"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "genres": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Genres",
+            "type": "array"
+          },
+          "id": {
+            "$ref": "#/components/schemas/SongId"
+          },
+          "isrc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isrc"
+          },
+          "mbid": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mbid"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "artist"
+        ],
+        "title": "Song",
+        "type": "object"
+      },
+      "SongId": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "title": "kwamz_radio API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/bans/{song_id}": {
+      "delete": {
+        "operationId": "unban",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "song_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Song Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unban",
+        "tags": [
+          "feedback"
+        ]
+      },
+      "put": {
+        "operationId": "ban",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "song_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Song Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Ban",
+        "tags": [
+          "feedback"
+        ]
+      }
+    },
+    "/events": {
+      "post": {
+        "description": "Store a batch of raw playback/feedback events. Safe to retry: events whose `id` is\nalready stored are skipped.",
+        "operationId": "log_events",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/EventIn"
+                },
+                "maxItems": 500,
+                "minItems": 1,
+                "title": "Events",
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventBatchResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Log Events",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Health",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/likes/{song_id}": {
+      "delete": {
+        "operationId": "unlike",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "song_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Song Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unlike",
+        "tags": [
+          "feedback"
+        ]
+      },
+      "put": {
+        "operationId": "like",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "song_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Song Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Like",
+        "tags": [
+          "feedback"
+        ]
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "get_me",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Me",
+        "tags": [
+          "me"
+        ]
+      },
+      "patch": {
+        "operationId": "update_me",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Me",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/radios": {
+      "get": {
+        "description": "The user's saved radios, newest first.",
+        "operationId": "list_radios",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Radio"
+                  },
+                  "title": "Response List Radios",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Radios",
+        "tags": [
+          "radios"
+        ]
+      },
+      "post": {
+        "description": "Generate a frozen radio of up to 20 tracks from one seed song.",
+        "operationId": "create_radio",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRadio"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Radio"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Radio",
+        "tags": [
+          "radios"
+        ]
+      }
+    },
+    "/radios/{radio_id}": {
+      "get": {
+        "operationId": "get_radio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "radio_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Radio Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Radio"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Radio",
+        "tags": [
+          "radios"
+        ]
+      }
+    },
+    "/search": {
+      "get": {
+        "description": "Search the Apple Music catalog. Every result is stored in `songs` so it can seed a\nradio.",
+        "operationId": "search",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Q",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Search",
+        "tags": [
+          "search"
+        ]
+      }
+    }
+  }
+}

@@ -3,7 +3,10 @@ name = "kwamz-radio-core"
 version = "0.1.0"
 description = "Shared models and DB access."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "psycopg[binary]>=3.2",
+    "pydantic>=2.10",
+]
 
 [build-system]
 requires = ["hatchling"]

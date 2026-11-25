@@ -180,9 +180,10 @@ def test_signed_in_user_can_read_catalog(conn: psycopg.Connection) -> None:
 
 
 def test_service_role_bypasses_rls(conn: psycopg.Connection) -> None:
-    make_event(conn, make_user(conn))
-    make_event(conn, make_user(conn))
+    users = [make_user(conn), make_user(conn)]
+    for user_id in users:
+        make_event(conn, user_id)
 
     conn.execute("set local role service_role")
-    count = conn.execute("select count(*) from events").fetchone()
+    count = conn.execute("select count(*) from events where user_id = any(%s)", (users,)).fetchone()
     assert count == (2,)
