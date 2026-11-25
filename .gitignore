@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+data/
+exports/
+*.parquet
+*.p8
+node_modules/
+.venv/
+__pycache__/
+.DS_Store
