@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-app = FastAPI(title="kwam_radio API")
+app = FastAPI(title="kwamz_radio API")
 
 
 @app.get("/health")

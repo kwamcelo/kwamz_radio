@@ -1,10 +1,10 @@
 {
-  "name": "kwam-radio",
+  "name": "kwamz-radio",
   "private": true,
   "packageManager": "pnpm@10.20.0",
   "scripts": {
-    "test": "pnpm --filter @kwam-radio/app test",
-    "lint": "pnpm --filter @kwam-radio/app lint",
-    "typecheck": "pnpm --filter @kwam-radio/app typecheck"
+    "test": "pnpm --filter @kwamz-radio/app test",
+    "lint": "pnpm --filter @kwamz-radio/app lint",
+    "typecheck": "pnpm --filter @kwamz-radio/app typecheck"
   }
 }

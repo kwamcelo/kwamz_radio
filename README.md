@@ -1,4 +1,4 @@
-# kwam_radio
+# kwamz_radio
 
 Radio-style playlists from a single seed song, powered by a recommendation model trained on public listening data, personal listening history, and in-app behaviour.
 
@@ -10,10 +10,10 @@ Radio-style playlists from a single seed song, powered by a recommendation model
 | Path | What |
 |---|---|
 | `app/` | Expo (React Native + TypeScript) mobile app |
-| `api/` | FastAPI backend (`kwam_api`) |
-| `ml/` | Model training and evaluation (`kwam_ml`) |
-| `pipeline/` | Data import and song matching (`kwam_pipeline`) |
-| `core/` | Shared Python code (`kwam_core`) |
+| `api/` | FastAPI backend (`kwamz_api`) |
+| `ml/` | Model training and evaluation (`kwamz_ml`) |
+| `pipeline/` | Data import and song matching (`kwamz_pipeline`) |
+| `core/` | Shared Python code (`kwamz_core`) |
 | `supabase/migrations/` | SQL migrations |
 
 ## Prerequisites
@@ -36,8 +36,8 @@ Migrations in `supabase/migrations/` run automatically the first time the databa
 ## Run
 
 ```bash
-uv run uvicorn kwam_api.main:app --reload   # API on http://localhost:8000
-pnpm --filter @kwam-radio/app start         # Expo dev server
+uv run uvicorn kwamz_api.main:app --reload   # API on http://localhost:8000
+pnpm --filter @kwamz-radio/app start         # Expo dev server
 ```
 
 ## Checks

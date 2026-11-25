@@ -1,5 +1,5 @@
-import kwam_core
+import kwamz_core
 
 
 def test_package_imports() -> None:
-    assert kwam_core.__doc__
+    assert kwamz_core.__doc__

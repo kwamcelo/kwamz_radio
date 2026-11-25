@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "kwam radio",
-    "slug": "kwam-radio",
+    "name": "kwamz radio",
+    "slug": "kwamz-radio",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -23,6 +23,6 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "kwamradio"
+    "scheme": "kwamzradio"
   }
 }

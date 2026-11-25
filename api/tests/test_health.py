@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from kwam_api.main import app
+from kwamz_api.main import app
 
 
 def test_health() -> None:

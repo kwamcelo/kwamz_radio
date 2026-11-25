@@ -4,11 +4,11 @@ requires-python = ">=3.12"
 
 [manifest]
 members = [
-    "kwam-radio",
-    "kwam-radio-api",
-    "kwam-radio-core",
-    "kwam-radio-ml",
-    "kwam-radio-pipeline",
+    "kwamz-radio",
+    "kwamz-radio-api",
+    "kwamz-radio-core",
+    "kwamz-radio-ml",
+    "kwamz-radio-pipeline",
 ]
 
 [[package]]
@@ -229,14 +229,14 @@ wheels = [
 ]
 
 [[package]]
-name = "kwam-radio"
+name = "kwamz-radio"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "kwam-radio-api" },
-    { name = "kwam-radio-core" },
-    { name = "kwam-radio-ml" },
-    { name = "kwam-radio-pipeline" },
+    { name = "kwamz-radio-api" },
+    { name = "kwamz-radio-core" },
+    { name = "kwamz-radio-ml" },
+    { name = "kwamz-radio-pipeline" },
 ]
 
 [package.dev-dependencies]
@@ -249,10 +249,10 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "kwam-radio-api", editable = "api" },
-    { name = "kwam-radio-core", editable = "core" },
-    { name = "kwam-radio-ml", editable = "ml" },
-    { name = "kwam-radio-pipeline", editable = "pipeline" },
+    { name = "kwamz-radio-api", editable = "api" },
+    { name = "kwamz-radio-core", editable = "core" },
+    { name = "kwamz-radio-ml", editable = "ml" },
+    { name = "kwamz-radio-pipeline", editable = "pipeline" },
 ]
 
 [package.metadata.requires-dev]
@@ -264,48 +264,48 @@ dev = [
 ]
 
 [[package]]
-name = "kwam-radio-api"
+name = "kwamz-radio-api"
 version = "0.1.0"
 source = { editable = "api" }
 dependencies = [
     { name = "fastapi" },
-    { name = "kwam-radio-core" },
+    { name = "kwamz-radio-core" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
-    { name = "kwam-radio-core", editable = "core" },
+    { name = "kwamz-radio-core", editable = "core" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32" },
 ]
 
 [[package]]
-name = "kwam-radio-core"
+name = "kwamz-radio-core"
 version = "0.1.0"
 source = { editable = "core" }
 
 [[package]]
-name = "kwam-radio-ml"
+name = "kwamz-radio-ml"
 version = "0.1.0"
 source = { editable = "ml" }
 dependencies = [
-    { name = "kwam-radio-core" },
+    { name = "kwamz-radio-core" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "kwam-radio-core", editable = "core" }]
+requires-dist = [{ name = "kwamz-radio-core", editable = "core" }]
 
 [[package]]
-name = "kwam-radio-pipeline"
+name = "kwamz-radio-pipeline"
 version = "0.1.0"
 source = { editable = "pipeline" }
 dependencies = [
-    { name = "kwam-radio-core" },
+    { name = "kwamz-radio-core" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "kwam-radio-core", editable = "core" }]
+requires-dist = [{ name = "kwamz-radio-core", editable = "core" }]
 
 [[package]]
 name = "nodeenv"
