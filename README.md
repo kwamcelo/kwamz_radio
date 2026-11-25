@@ -52,3 +52,13 @@ pnpm test                                  # app tests (Jest)
 pnpm lint
 pnpm typecheck
 ```
+
+## API contract
+
+`api/openapi.json` and the typed TS client in `app/src/api/schema.d.ts` are generated, never hand-edited. After changing any endpoint or schema in `api/`, run:
+
+```bash
+make contracts
+```
+
+and commit the result. CI fails if they're out of date.
