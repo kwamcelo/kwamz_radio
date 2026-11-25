@@ -1,4 +1,4 @@
-# kwam_radio — Design
+# kwamz_radio — Design
 
 A mobile app that generates Spotify-radio-style playlists from a single seed song, using a recommendation model trained on public listening data, the owner's own listening history, and in-app listening behaviour.
 

@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "kwamz radio",
+    "slug": "kwamz-radio",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "kwamz.radio"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "kwamz.radio"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "kwamzradio"
+  }
+}

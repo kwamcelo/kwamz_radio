@@ -1,0 +1,52 @@
+[project]
+name = "kwamz-radio"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "kwamz-radio-core",
+    "kwamz-radio-api",
+    "kwamz-radio-ml",
+    "kwamz-radio-pipeline",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+kwamz-radio-core = { workspace = true }
+kwamz-radio-api = { workspace = true }
+kwamz-radio-ml = { workspace = true }
+kwamz-radio-pipeline = { workspace = true }
+
+[tool.uv.workspace]
+members = ["core", "api", "ml", "pipeline"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.8",
+    "pyright>=1.1.390",
+    "httpx>=0.28.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["core/tests", "api/tests", "ml/tests", "pipeline/tests"]
+addopts = "--import-mode=importlib"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["docs", "app"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["kwamz_core", "kwamz_api", "kwamz_ml", "kwamz_pipeline"]
+
+[tool.pyright]
+include = ["core/src", "api/src", "ml/src", "pipeline/src", "core/tests", "api/tests", "ml/tests", "pipeline/tests"]
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "standard"

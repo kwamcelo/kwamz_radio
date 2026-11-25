@@ -1,0 +1,20 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: kwamz
+      POSTGRES_PASSWORD: kwamz
+      POSTGRES_DB: kwamz_radio
+    ports:
+      - "54322:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kwamz -d kwamz_radio"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  db-data:
