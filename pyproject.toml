@@ -27,10 +27,11 @@ dev = [
     "ruff>=0.8",
     "pyright>=1.1.390",
     "httpx>=0.28.1",
+    "psycopg[binary]>=3.2",
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["core/tests", "api/tests", "ml/tests", "pipeline/tests"]
+testpaths = ["core/tests", "api/tests", "ml/tests", "pipeline/tests", "supabase/tests"]
 addopts = "--import-mode=importlib"
 
 [tool.ruff]
@@ -45,7 +46,7 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 known-first-party = ["kwamz_core", "kwamz_api", "kwamz_ml", "kwamz_pipeline"]
 
 [tool.pyright]
-include = ["core/src", "api/src", "ml/src", "pipeline/src", "core/tests", "api/tests", "ml/tests", "pipeline/tests"]
+include = ["core/src", "api/src", "ml/src", "pipeline/src", "core/tests", "api/tests", "ml/tests", "pipeline/tests", "supabase/tests"]
 pythonVersion = "3.12"
 venvPath = "."
 venv = ".venv"

@@ -9,7 +9,8 @@ services:
       - "54322:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
+      - ./supabase:/kwamz/supabase:ro
+      - ./supabase/local/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U kwamz -d kwamz_radio"]
       interval: 2s
