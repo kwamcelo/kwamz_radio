@@ -31,7 +31,9 @@ uv sync
 docker compose up -d   # Postgres 16 + pgvector on localhost:54322
 ```
 
-Migrations in `supabase/migrations/` run automatically the first time the database volume is created. To start over: `docker compose down -v && docker compose up -d`.
+Migrations in `supabase/migrations/` run automatically the first time the database volume is created, after `supabase/local/` (a local-only stand-in for Supabase's `auth` schema and roles; never applied to real Supabase). After adding a migration, recreate the volume: `docker compose down -v && docker compose up -d`.
+
+Schema tests (`supabase/tests/`) create and drop their own throwaway database on that server, so they always test the migrations from scratch. They're skipped if no database is running (and fail in CI).
 
 ## Run
 
