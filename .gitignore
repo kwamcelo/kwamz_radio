@@ -9,3 +9,10 @@ node_modules/
 .venv/
 __pycache__/
 .DS_Store
+.expo/
+dist/
+*.zip
+.pytest_cache/
+.ruff_cache/
+ios/
+android/

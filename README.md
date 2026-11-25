@@ -4,3 +4,49 @@ Radio-style playlists from a single seed song, powered by a recommendation model
 
 - Design: [docs/design.md](docs/design.md)
 - Tickets: [docs/tickets/README.md](docs/tickets/README.md) (mirrored as GitHub issues)
+
+## Layout
+
+| Path | What |
+|---|---|
+| `app/` | Expo (React Native + TypeScript) mobile app |
+| `api/` | FastAPI backend (`kwam_api`) |
+| `ml/` | Model training and evaluation (`kwam_ml`) |
+| `pipeline/` | Data import and song matching (`kwam_pipeline`) |
+| `core/` | Shared Python code (`kwam_core`) |
+| `supabase/migrations/` | SQL migrations |
+
+## Prerequisites
+
+- Node 22+ and pnpm (`corepack enable`; the version is pinned in `package.json`)
+- [uv](https://docs.astral.sh/uv/) for Python
+- Docker (Docker Desktop or OrbStack)
+
+## Setup
+
+```bash
+cp .env.example .env   # then fill in your values
+pnpm install
+uv sync
+docker compose up -d   # Postgres 16 + pgvector on localhost:54322
+```
+
+Migrations in `supabase/migrations/` run automatically the first time the database volume is created. To start over: `docker compose down -v && docker compose up -d`.
+
+## Run
+
+```bash
+uv run uvicorn kwam_api.main:app --reload   # API on http://localhost:8000
+pnpm --filter @kwam-radio/app start         # Expo dev server
+```
+
+## Checks
+
+```bash
+uv run pytest                              # Python tests
+uv run ruff check . && uv run ruff format --check .
+uv run pyright
+pnpm test                                  # app tests (Jest)
+pnpm lint
+pnpm typecheck
+```
