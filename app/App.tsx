@@ -1,3 +1,4 @@
+// CI path-filter check (S0-5): this PR is closed without merging.
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 
