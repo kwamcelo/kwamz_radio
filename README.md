@@ -62,3 +62,9 @@ make contracts
 ```
 
 and commit the result. CI fails if they're out of date.
+
+## CI
+
+`.github/workflows/ci.yml` runs on every PR and on pushes to `main`. A `changes` job decides which of `app`, `api`, `pipeline` and `ml` need to run; `contracts` (migrations from scratch + `make contracts` with no diff) always runs. **`CI result`** passes only if every job passed or was skipped: it is the single required check for `main`.
+
+`claude-review.yml` posts advisory review comments when the `ANTHROPIC_API_KEY` secret is set (it is not a required check).
