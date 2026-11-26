@@ -1,5 +1,6 @@
 import time
 import uuid
+from collections.abc import Callable
 
 import psycopg
 import pytest
@@ -74,3 +75,11 @@ def test_update_provider_preference(client: TestClient, user: User) -> None:
 
     bad = client.patch("/me", headers=user.headers, json={"provider_preference": "spotify"})
     assert bad.status_code == 422
+
+
+def test_app_starts_without_supabase_config(
+    make_client: Callable[..., TestClient], user: User
+) -> None:
+    client = make_client(token_verifier=None, settings={"supabase_url": ""})
+    assert client.get("/health").status_code == 200
+    assert client.get("/me", headers=user.headers).status_code == 401

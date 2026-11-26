@@ -37,8 +37,10 @@ def create_app(
         generate_unique_id_function=operation_id,
     )
     app.state.pool = create_pool(settings.database_url)
-    app.state.token_verifier = token_verifier or TokenVerifier.from_jwks(
-        settings.supabase_jwks_url, settings.supabase_issuer
+    app.state.token_verifier = token_verifier or (
+        TokenVerifier.from_jwks(settings.supabase_jwks_url, settings.supabase_issuer)
+        if settings.supabase_url
+        else TokenVerifier.unconfigured()
     )
     app.state.apple = apple or _apple_from_settings(settings)
     app.state.generator = generator or load_generator(

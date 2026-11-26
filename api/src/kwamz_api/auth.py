@@ -27,6 +27,16 @@ class TokenVerifier:
         client = jwt.PyJWKClient(jwks_url, cache_keys=True)
         return cls(lambda token: client.get_signing_key_from_jwt(token).key, issuer)
 
+    @classmethod
+    def unconfigured(cls) -> "TokenVerifier":
+        """Without SUPABASE_URL the API still starts (tests, OpenAPI export) but rejects
+        every token."""
+
+        def no_key(_token: str) -> Any:
+            raise jwt.PyJWKClientError("SUPABASE_URL is not set")
+
+        return cls(no_key, issuer="")
+
     def verify(self, token: str) -> UUID:
         """Return the user id (`sub`) of a valid token, or raise jwt.PyJWTError."""
         claims = jwt.decode(
