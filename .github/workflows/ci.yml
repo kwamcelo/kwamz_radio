@@ -1,0 +1,177 @@
+# One workflow, path-filtered by the `changes` job. Jobs for untouched parts are
+# skipped (which counts as passing), and `CI result` sums everything up: it is the
+# only check branch protection needs to require.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  DATABASE_URL: postgresql://kwamz:kwamz@localhost:5432/kwamz_radio
+
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+      api: ${{ steps.filter.outputs.api }}
+      pipeline: ${{ steps.filter.outputs.pipeline }}
+      ml: ${{ steps.filter.outputs.ml }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            python: &python
+              - core/**
+              - pyproject.toml
+              - uv.lock
+              - .python-version
+              - conftest.py
+              - .github/**
+            app:
+              - app/**
+              - package.json
+              - pnpm-lock.yaml
+              - pnpm-workspace.yaml
+              - .github/**
+            api:
+              - *python
+              - api/**
+              - supabase/**
+            pipeline:
+              - *python
+              - pipeline/**
+            ml:
+              - *python
+              - ml/**
+
+  app:
+    name: app
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-node
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+
+  api:
+    name: api
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: kwamz
+          POSTGRES_PASSWORD: kwamz
+          POSTGRES_DB: kwamz_radio
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U kwamz -d kwamz_radio"
+          --health-interval 2s --health-timeout 3s --health-retries 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-python
+      - run: uv run ruff check api core supabase conftest.py
+      - run: uv run ruff format --check api core supabase conftest.py
+      - run: uv run pyright api core supabase/tests
+      # Schema tests apply every migration to a fresh database.
+      - run: uv run pytest api/tests core/tests supabase/tests
+
+  pipeline:
+    name: pipeline
+    needs: changes
+    if: needs.changes.outputs.pipeline == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-python
+      - run: uv run ruff check pipeline
+      - run: uv run ruff format --check pipeline
+      - run: uv run pyright pipeline
+      - run: uv run pytest pipeline/tests
+
+  ml:
+    name: ml
+    needs: changes
+    if: needs.changes.outputs.ml == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-python
+      - run: uv run ruff check ml
+      - run: uv run ruff format --check ml
+      - run: uv run pyright ml
+      - run: uv run pytest ml/tests
+      - name: Mini walk-forward eval vs stored baseline
+        run: echo "Placeholder until B3 adds the walk-forward eval."
+
+  contracts:
+    name: contracts
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: kwamz
+          POSTGRES_PASSWORD: kwamz
+          POSTGRES_DB: kwamz_radio
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U kwamz -d kwamz_radio"
+          --health-interval 2s --health-timeout 3s --health-retries 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-python
+      - uses: ./.github/actions/setup-node
+      - name: Migrations apply from scratch
+        run: |
+          for f in supabase/local/*.sql supabase/migrations/*.sql; do
+            echo "applying $f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+      - name: Regenerate OpenAPI spec and TS client
+        run: make contracts
+      - name: Generated files are committed
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --short
+            git --no-pager diff
+            echo "::error::Generated contract files are out of date. Run 'make contracts' and commit the result."
+            exit 1
+          fi
+
+  result:
+    name: CI result
+    needs: [changes, app, api, pipeline, ml, contracts]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: All jobs passed or were skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "job results: $RESULTS"
+          for r in $RESULTS; do
+            if [ "$r" != "success" ] && [ "$r" != "skipped" ]; then
+              echo "::error::A CI job did not pass ($r)."
+              exit 1
+            fi
+          done

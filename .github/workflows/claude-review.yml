@@ -1,0 +1,54 @@
+# Advisory review comments from Claude on every PR. Not a required check.
+# Needs the ANTHROPIC_API_KEY repo secret (set up with `/install-github-app` in Claude
+# Code); without it the job is a no-op.
+name: Claude review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    env:
+      HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    steps:
+      - name: Skip without API key
+        if: env.HAS_KEY != 'true'
+        run: echo "ANTHROPIC_API_KEY is not set; skipping Claude review."
+      - uses: actions/checkout@v7
+        if: env.HAS_KEY == 'true'
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        if: env.HAS_KEY == 'true'
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this pull request. Read docs/design.md and the matching ticket in
+            docs/tickets/ first. Focus on:
+            - correctness bugs and missed edge cases
+            - changes to contracts (supabase/migrations, api/openapi.json,
+              kwamz_core.radio) that the ticket did not call for
+            - security: auth checks, RLS, secrets, user data leaking across users
+            - missing tests for the ticket's "Done when" items
+
+            Be brief; skip style nits that ruff/pyright already catch.
+            The PR branch is already checked out in the current working directory.
+            Use `gh pr comment` for top-level feedback.
+            Use `mcp__github_inline_comment__create_inline_comment` (with `confirmed: true`)
+            for specific code issues. Only post GitHub comments.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
