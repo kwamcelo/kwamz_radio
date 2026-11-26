@@ -111,7 +111,7 @@ export interface paths {
         put?: never;
         /**
          * Create Radio
-         * @description Generate a frozen radio of up to 20 tracks from one seed song.
+         * @description Generate a frozen radio of exactly 20 tracks from one seed song.
          */
         post: operations["create_radio"];
         delete?: never;

@@ -16,7 +16,7 @@ router = make_router("radios")
 
 @router.post("/radios", status_code=status.HTTP_201_CREATED)
 def create_radio(request: Request, conn: Conn, user_id: UserId, body: CreateRadio) -> Radio:
-    """Generate a frozen radio of up to 20 tracks from one seed song."""
+    """Generate a frozen radio of exactly 20 tracks from one seed song."""
     generator: RadioGenerator | None = request.app.state.generator
     if generator is None:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "No radio generator configured")
@@ -66,12 +66,16 @@ def get_radio(conn: Conn, user_id: UserId, radio_id: UUID) -> Radio:
 
 
 def _check_result(result: RadioResult, exclude: set[SongId]) -> None:
-    """A generator bug must never produce a broken radio."""
+    """Radios always have exactly RADIO_LENGTH tracks; a generator bug must never produce
+    a broken radio."""
     tracks = result.tracks
-    if not tracks:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Could not generate a radio")
     if len(tracks) > RADIO_LENGTH or len(set(tracks)) != len(tracks) or exclude & set(tracks):
         raise RuntimeError(f"generator {result.model_version} returned an invalid radio")
+    if len(tracks) < RADIO_LENGTH:
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            f"Could not find {RADIO_LENGTH} songs for this radio",
+        )
 
 
 def _banned(conn: psycopg.Connection, user_id: UUID) -> set[SongId]:

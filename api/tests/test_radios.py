@@ -57,9 +57,8 @@ def test_keep_going_continues_without_repeats(
     second = create(client, user, catalog[0], parent=first["id"])
 
     assert second["parent_radio_id"] == first["id"]
+    assert len(second["tracks"]) == 20
     assert not set(track_ids(first)) & set(track_ids(second))
-    # 30-song catalog minus seed minus 20 used: the generator runs out after 9.
-    assert len(second["tracks"]) == 9
 
     # The original radio is untouched.
     assert client.get(f"/radios/{first['id']}", headers=user.headers).json() == first
@@ -91,17 +90,36 @@ def test_unknown_seed_is_404(client: TestClient, user: User) -> None:
 def test_no_generator_configured_is_503(
     make_client: Callable[..., TestClient], user: User, catalog: list[SongId]
 ) -> None:
-    client = make_client(generator=None)
+    client = make_client(generator=None, settings={"radio_generator": ""})
     response = client.post("/radios", headers=user.headers, json={"seed_song_id": str(catalog[0])})
     assert response.status_code == 503
 
 
-def test_generator_returning_nothing_is_503(
+def test_short_radio_is_503_and_not_saved(
     client: TestClient, user: User, catalog: list[SongId], generator: FakeGenerator
 ) -> None:
-    generator.override = lambda _exclude: []
-    response = client.post("/radios", headers=user.headers, json={"seed_song_id": str(catalog[0])})
-    assert response.status_code == 503
+    for output in ([], list(catalog[1:20])):  # nothing; 19 songs
+        generator.override = lambda _exclude, out=output: out
+        response = client.post(
+            "/radios", headers=user.headers, json={"seed_song_id": str(catalog[0])}
+        )
+        assert response.status_code == 503
+    assert client.get("/radios", headers=user.headers).json() == []
+
+
+def test_keep_going_that_runs_out_is_503(
+    client: TestClient, user: User, catalog: list[SongId]
+) -> None:
+    # 50-song catalog minus the seed minus 40 already played leaves 9.
+    first = create(client, user, catalog[0])
+    second = create(client, user, catalog[0], parent=first["id"])
+    third = client.post(
+        "/radios",
+        headers=user.headers,
+        json={"seed_song_id": str(catalog[0]), "parent_radio_id": second["id"]},
+    )
+    assert third.status_code == 503
+    assert len(client.get("/radios", headers=user.headers).json()) == 2
 
 
 def test_invalid_generator_output_is_rejected(
@@ -123,3 +141,16 @@ def test_invalid_generator_output_is_rejected(
         )
         assert response.status_code == 500
     assert client.get("/radios", headers=user.headers).json() == []
+
+
+def test_dummy_generator_is_the_default(
+    make_client: Callable[..., TestClient], user: User, catalog: list[SongId]
+) -> None:
+    client = make_client(generator=None)  # RADIO_GENERATOR defaults to "dummy"
+    seed = client.get("/search", params={"q": "m83"}, headers=user.headers).json()["songs"][0]
+
+    radio = create(client, user, seed["id"])
+    assert radio["model_version"] == "dummy-v1"
+    assert len(radio["tracks"]) == 20
+    # The stubbed catalog has one other M83 song; the rest is filled from known songs.
+    assert radio["tracks"][0]["song"]["title"] == "Wait"
