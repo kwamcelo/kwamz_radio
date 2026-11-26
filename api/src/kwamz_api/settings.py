@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     apple_musickit_private_key_path: Path | None = None
     apple_music_storefront: str = "ca"
 
+    # Which RadioGenerator builds radios: "dummy", "package.module:factory", or "" for none.
+    radio_generator: str = "dummy"
+
     @property
     def supabase_issuer(self) -> str:
         return f"{self.supabase_url.rstrip('/')}/auth/v1"

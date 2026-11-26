@@ -6,9 +6,10 @@ from fastapi import FastAPI
 from kwamz_api.apple import AppleMusicClient, DeveloperTokenProvider
 from kwamz_api.auth import TokenVerifier
 from kwamz_api.db import create_pool
+from kwamz_api.generators import load_generator
 from kwamz_api.routes import events, feedback, me, operation_id, radios, search
 from kwamz_api.settings import Settings, get_settings
-from kwamz_core.radio import RadioGenerator
+from kwamz_core.radio import GeneratorDeps, RadioGenerator
 
 
 def create_app(
@@ -40,8 +41,9 @@ def create_app(
         settings.supabase_jwks_url, settings.supabase_issuer
     )
     app.state.apple = apple or _apple_from_settings(settings)
-    # Wired up by S0-4 (DummyGenerator) and B2 (Item2VecGenerator).
-    app.state.generator = generator
+    app.state.generator = generator or load_generator(
+        settings.radio_generator, GeneratorDeps(pool=app.state.pool, catalog=app.state.apple)
+    )
 
     @app.get("/health", tags=["health"])
     def health() -> dict[str, str]:

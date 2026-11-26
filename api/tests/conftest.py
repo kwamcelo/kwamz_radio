@@ -99,8 +99,13 @@ class AppleStub:
     status_code: int = 200
 
     def handler(self, request: httpx.Request) -> httpx.Response:
+        """Search returns two M83 songs; every other lookup finds nothing."""
         self.requests.append(request)
-        return httpx.Response(self.status_code, json=APPLE_SEARCH_RESPONSE)
+        if request.url.path.endswith("/search"):
+            return httpx.Response(self.status_code, json=APPLE_SEARCH_RESPONSE)
+        if request.url.path.endswith("/charts"):
+            return httpx.Response(self.status_code, json={"results": {}})
+        return httpx.Response(self.status_code, json={"data": []})
 
 
 @pytest.fixture
@@ -112,14 +117,14 @@ def db(db_url: str) -> Iterator[psycopg.Connection]:
 
 @pytest.fixture
 def catalog(db: psycopg.Connection) -> list[SongId]:
-    """30 fresh songs."""
+    """50 fresh songs."""
     tag = uuid.uuid4().hex[:6]
     return [
         db.execute(
             "insert into songs (title, artist) values (%s, %s) returning id",
             (f"Song {i} {tag}", f"Artist {tag}"),
         ).fetchone()[0]  # type: ignore[index]
-        for i in range(30)
+        for i in range(50)
     ]
 
 
@@ -154,7 +159,8 @@ def make_client(
             "generator": generator,
         } | overrides
         raise_errors = kwargs.pop("raise_server_exceptions", True)
-        app = create_app(Settings(database_url=db_url), **kwargs)
+        settings = Settings(database_url=db_url, **kwargs.pop("settings", {}))
+        app = create_app(settings, **kwargs)
         client = TestClient(app, raise_server_exceptions=raise_errors)
         client.__enter__()
         clients.append(client)

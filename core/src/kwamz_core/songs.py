@@ -35,6 +35,13 @@ class AppleSong(BaseModel):
     genres: list[str] = []
 
 
+class SongContext(BaseModel):
+    """Catalog ids related to a song, used to look for similar music."""
+
+    artist_ids: list[str] = []
+    genre_ids: list[str] = []
+
+
 def get_songs(conn: psycopg.Connection, ids: Iterable[SongId]) -> dict[SongId, Song]:
     with conn.cursor(row_factory=class_row(Song)) as cur:
         cur.execute(f"select {SONG_COLUMNS} from songs where id = any(%s)", (list(ids),))
