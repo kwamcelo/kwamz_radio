@@ -42,6 +42,24 @@ uv run uvicorn kwamz_api.main:app --reload   # API on http://localhost:8000
 pnpm --filter @kwamz-radio/app start         # Expo dev server
 ```
 
+### On an iPhone
+
+The app needs a development build (MusicKit and the sign-in sheets are native code, so Expo Go won't work). Needs Xcode, CocoaPods, and the phone in Developer Mode.
+
+1. `cp app/.env.example app/.env.local` and fill it in. `EXPO_PUBLIC_API_URL` is your Mac's LAN address (`ipconfig getifaddr en0`), not `localhost`.
+2. Run the API against the real Supabase database, reachable from the phone. Real sign-ins create users in Supabase's `auth.users`, which the local database doesn't have:
+   ```bash
+   set -a; . ./.env; set +a
+   DATABASE_URL="$SUPABASE_DB_URL" uv run uvicorn kwamz_api.main:app --host 0.0.0.0 --reload
+   ```
+3. Plug in the phone and build: `cd app && npx expo run:ios --device`. Later JS changes reload live; rebuild only after native changes (`modules/`, `app.json`, `app.config.ts`, new native packages).
+
+If the phone can't reach the Mac (some campus Wi-Fi blocks device-to-device traffic), put both on a phone hotspot.
+
+Supabase dashboard settings sign-in depends on:
+- Apple provider → Client IDs includes the bundle ID `kwamz.radio`.
+- Google provider → Client IDs lists the web client ID first, then the iOS client ID; "Skip nonce check" on (the iOS Google SDK adds a nonce Supabase can't see).
+
 ## Checks
 
 ```bash

@@ -9,8 +9,12 @@ export type Radio = components["schemas"]["Radio"];
 export type EventIn = components["schemas"]["EventIn"];
 export type Me = components["schemas"]["Me"];
 
-export function createApiClient(baseUrl: string, getAccessToken: () => Promise<string | null>) {
-  const client = createClient<paths>({ baseUrl });
+export function createApiClient(
+  baseUrl: string,
+  getAccessToken: () => Promise<string | null>,
+  fetch?: (request: Request) => Promise<Response>,
+) {
+  const client = createClient<paths>({ baseUrl, fetch });
   const auth: Middleware = {
     async onRequest({ request }) {
       const token = await getAccessToken();

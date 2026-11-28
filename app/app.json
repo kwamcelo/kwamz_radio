@@ -8,7 +8,8 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "kwamz.radio"
+      "bundleIdentifier": "kwamz.radio",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {

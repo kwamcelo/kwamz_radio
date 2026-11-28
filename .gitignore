@@ -14,5 +14,6 @@ dist/
 *.zip
 .pytest_cache/
 .ruff_cache/
-ios/
-android/
+# Generated native projects (Expo prebuild); local modules keep their ios/ sources
+/app/ios/
+/app/android/
