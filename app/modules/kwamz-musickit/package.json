@@ -1,0 +1,10 @@
+{
+  "name": "kwamz-musickit",
+  "version": "0.1.0",
+  "description": "Apple MusicKit playback for kwamz radio (ApplicationMusicPlayer).",
+  "main": "index.ts",
+  "license": "UNLICENSED",
+  "author": "kwamz radio",
+  "homepage": "https://github.com/kwamcelo/kwamz_radio",
+  "private": true
+}
