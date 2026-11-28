@@ -154,3 +154,22 @@ def test_dummy_generator_is_the_default(
     assert len(radio["tracks"]) == 20
     # The stubbed catalog has one other M83 song; the rest is filled from known songs.
     assert radio["tracks"][0]["song"]["title"] == "Wait"
+
+
+def test_tracks_show_the_users_own_likes_and_bans(
+    client: TestClient, new_user: Callable[[], User], catalog: list[SongId]
+) -> None:
+    owner, other = new_user(), new_user()
+    radio = create(client, owner, catalog[0])
+    liked, banned = radio["tracks"][0]["song"]["id"], radio["tracks"][1]["song"]["id"]
+    assert client.put(f"/likes/{liked}", headers=owner.headers).status_code == 204
+    assert client.put(f"/bans/{banned}", headers=owner.headers).status_code == 204
+    assert client.put(f"/likes/{banned}", headers=other.headers).status_code == 204
+
+    tracks = client.get(f"/radios/{radio['id']}", headers=owner.headers).json()["tracks"]
+
+    flags = {t["song"]["id"]: (t["liked"], t["banned"]) for t in tracks}
+    assert flags[liked] == (True, False)
+    assert flags[banned] == (False, True)  # another user's like doesn't show
+    assert all(f == (False, False) for s, f in flags.items() if s not in {liked, banned})
+    assert [t["song"]["id"] for t in tracks] == track_ids(radio)  # order is unchanged

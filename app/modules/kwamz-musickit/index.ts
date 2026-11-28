@@ -21,6 +21,8 @@ declare class KwamzMusicKitModule extends NativeModule<Events> {
   skipToNext(): Promise<void>;
   skipToPrevious(): Promise<void>;
   seek(positionMs: number): Promise<void>;
+  /** Adds a catalog song to the user's real library; it can't be removed from this app. */
+  addToLibrary(appleId: string): Promise<void>;
   getPositionMs(): number;
 }
 

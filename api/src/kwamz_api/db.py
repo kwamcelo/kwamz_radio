@@ -10,7 +10,16 @@ from psycopg_pool import ConnectionPool
 
 
 def create_pool(database_url: str) -> ConnectionPool:
-    return ConnectionPool(database_url, min_size=1, max_size=10, open=False)
+    return ConnectionPool(
+        database_url,
+        min_size=1,
+        max_size=10,
+        open=False,
+        # Test each connection before handing it out: pooled connections die when the
+        # network changes or the database restarts, and would otherwise fail a request.
+        check=ConnectionPool.check_connection,
+        kwargs={"application_name": "kwamz-api"},
+    )
 
 
 def get_conn(request: Request) -> Iterator[psycopg.Connection]:

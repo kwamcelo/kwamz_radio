@@ -5,8 +5,22 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { createApiClient, type Radio, type Song } from "./src/api/client";
 import { ApiProvider } from "./src/api/context";
+import { EventsProvider } from "./src/events/context";
+import type { KeyValueStore, LoggedEvent } from "./src/events/logger";
+import { PlaybackTracker } from "./src/events/playback";
 import { PlayerProvider } from "./src/player/context";
 import type { Player, PlayerEvent } from "./src/player/types";
+import { PrefsContext, UserPrefs } from "./src/prefs";
+
+export class MemoryStore implements KeyValueStore {
+  readonly items = new Map<string, string>();
+  async getItem(key: string) {
+    return this.items.get(key) ?? null;
+  }
+  async setItem(key: string, value: string) {
+    this.items.set(key, value);
+  }
+}
 
 type Handler = (request: Request) => Response | Promise<Response>;
 
@@ -17,7 +31,8 @@ export function json(body: unknown, status = 200): Response {
   });
 }
 
-/** Routes are "METHOD /path"; unmatched requests get a 404. Every request is recorded. */
+/** Routes are "METHOD /path" ("/likes/*" matches any last segment); unmatched requests
+ * get a 404. Every request is recorded. */
 export function fakeApi(routes: Record<string, Handler>) {
   const requests: Request[] = [];
   const client = createApiClient(
@@ -26,7 +41,9 @@ export function fakeApi(routes: Record<string, Handler>) {
     async (request) => {
       requests.push(request.clone());
       const { pathname } = new URL(request.url);
-      const handler = routes[`${request.method} ${pathname}`];
+      const wildcard = pathname.replace(/\/[^/]+$/, "/*");
+      const handler =
+        routes[`${request.method} ${pathname}`] ?? routes[`${request.method} ${wildcard}`];
       return handler ? handler(request) : json({ detail: "Not Found" }, 404);
     },
   );
@@ -45,7 +62,10 @@ export class FakePlayer implements Player {
   pause = jest.fn(async () => this.emit({ type: "status", status: "paused" }));
   seek = jest.fn(async (_positionMs: number) => {});
   next = jest.fn(async () => {});
-  positionMs = () => 0;
+  addToLibrary? = jest.fn(async (_song: Song) => {});
+  /** What positionMs() reports. */
+  position = 0;
+  positionMs = () => this.position;
 
   subscribe(listener: (event: PlayerEvent) => void) {
     this.listeners.add(listener);
@@ -65,17 +85,35 @@ const SAFE_AREA = {
   insets: { top: 59, left: 0, right: 0, bottom: 34 },
 };
 
-export function renderScreen(
+/** Trackers started by screen tests; stopped after each test so no interval leaks. */
+const trackers: PlaybackTracker[] = [];
+afterEach(() => trackers.splice(0).forEach((t) => t.stop()));
+
+export async function renderScreen(
   ui: ReactElement,
-  { api, player = new FakePlayer() }: { api: ReturnType<typeof fakeApi>; player?: Player },
+  {
+    api,
+    player = new FakePlayer(),
+    storage = new MemoryStore(),
+  }: { api: ReturnType<typeof fakeApi>; player?: Player; storage?: MemoryStore },
 ) {
-  return render(
+  const logged: LoggedEvent[] = [];
+  const log = (event: LoggedEvent) => logged.push(event);
+  const tracker = new PlaybackTracker(player, log);
+  trackers.push(tracker);
+  const prefs = new UserPrefs(storage, "test-user");
+  const result = await render(
     <SafeAreaProvider initialMetrics={SAFE_AREA}>
       <ApiProvider client={api.client}>
-        <PlayerProvider player={player}>{ui}</PlayerProvider>
+        <PlayerProvider player={player}>
+          <PrefsContext.Provider value={prefs}>
+            <EventsProvider events={{ log, tracker }}>{ui}</EventsProvider>
+          </PrefsContext.Provider>
+        </PlayerProvider>
       </ApiProvider>
     </SafeAreaProvider>,
   );
+  return { result, logged, tracker, prefs, storage };
 }
 
 let counter = 0;
@@ -103,6 +141,8 @@ export function radio(trackCount = 20): Radio {
     tracks: Array.from({ length: trackCount }, (_, i) => ({
       position: i,
       song: song(`Track ${i}`),
+      liked: false,
+      banned: false,
     })),
   };
 }

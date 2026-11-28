@@ -53,6 +53,12 @@ export class MusicKitPlayer implements Player {
   next = () => this.kit.skipToNext();
   positionMs = () => this.native?.getPositionMs() ?? 0;
 
+  async addToLibrary(song: Song): Promise<void> {
+    if (!song.apple_id) throw new PlayerUnavailable("This song isn't on Apple Music");
+    await this.authorize();
+    await this.kit.addToLibrary(song.apple_id);
+  }
+
   subscribe(listener: (event: PlayerEvent) => void): () => void {
     const kit = this.native;
     if (!kit) return () => {};

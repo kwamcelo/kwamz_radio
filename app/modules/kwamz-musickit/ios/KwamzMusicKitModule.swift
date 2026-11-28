@@ -53,6 +53,8 @@ public class KwamzMusicKitModule: Module {
       let start = songs.first { $0.id.rawValue == wanted } ?? songs[0]
       await MainActor.run {
         self.player.queue = ApplicationMusicPlayer.Queue(for: songs, startingAt: start)
+        // Announce the current song even if it's the one that was already playing.
+        self.lastAppleId = nil
         self.observeQueue()
       }
       try await self.player.prepareToPlay()
@@ -77,6 +79,16 @@ public class KwamzMusicKitModule: Module {
 
     AsyncFunction("seek") { (positionMs: Double) async in
       await MainActor.run { self.player.playbackTime = positionMs / 1000 }
+    }
+
+    /// Adds a catalog song to the user's real Apple Music library. There is no API to
+    /// remove it again: the user does that in the Music app.
+    AsyncFunction("addToLibrary") { (appleId: String) async throws in
+      let request = MusicCatalogResourceRequest<Song>(matching: \.id, equalTo: MusicItemID(appleId))
+      guard let song = try await request.response().items.first else {
+        throw Exception(name: "SongNotFound", description: "Song \(appleId) is not in the catalog")
+      }
+      try await MusicLibrary.shared.add(song)
     }
 
     Function("getPositionMs") { () -> Double in

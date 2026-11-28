@@ -24,6 +24,11 @@ export interface Player {
   seek(positionMs: number): Promise<void>;
   next(): Promise<void>;
   positionMs(): number;
+  /**
+   * Adds the song to the user's own library on this provider, if the provider has one
+   * (Apple Music does; YouTube doesn't). Can't be undone from the app.
+   */
+  addToLibrary?(song: Song): Promise<void>;
   /** Returns an unsubscribe function. */
   subscribe(listener: (event: PlayerEvent) => void): () => void;
 }

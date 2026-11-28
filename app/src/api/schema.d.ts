@@ -264,6 +264,18 @@ export interface components {
         RadioPosition: number;
         /** RadioTrack */
         RadioTrack: {
+            /**
+             * Banned
+             * @description The current user has banned this song.
+             * @default false
+             */
+            banned: boolean;
+            /**
+             * Liked
+             * @description The current user has liked this song.
+             * @default false
+             */
+            liked: boolean;
             position: components["schemas"]["RadioPosition"];
             song: components["schemas"]["Song"];
         };

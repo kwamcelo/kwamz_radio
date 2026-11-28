@@ -95,3 +95,30 @@ def test_validates_batch(client: TestClient, user: User, catalog: list[SongId]) 
     assert post([event(catalog[0], type="dance")]) == 422
     assert post([event(catalog[0], radio_position=20)]) == 422
     assert post([event(catalog[0], provider="spotify")]) == 422
+
+
+def test_every_app_event_type_is_stored_with_its_context(
+    client: TestClient, user: User, catalog: list[SongId], db: psycopg.Connection
+) -> None:
+    radio = client.post(
+        "/radios", headers=user.headers, json={"seed_song_id": str(catalog[0])}
+    ).json()
+    song = radio["tracks"][3]["song"]["id"]
+    types = [
+        "play_start", "progress", "pause", "seek", "skip", "complete",
+        "like", "unlike", "add_to_library", "ban", "start_radio_from", "unavailable",
+    ]  # fmt: skip
+    batch = [
+        event(song, type=t, radio_id=radio["id"], radio_position=3, position_ms=1000 * i)
+        for i, t in enumerate(types)
+    ]
+
+    response = client.post("/events", headers=user.headers, json=batch)
+    assert response.json() == {"received": 12, "inserted": 12}
+
+    rows = db.execute(
+        "select type::text, radio_id::text, radio_position, provider::text, position_ms"
+        " from events where user_id = %s and radio_id = %s order by position_ms",
+        (user.id, radio["id"]),
+    ).fetchall()
+    assert rows == [(t, radio["id"], 3, "apple", 1000 * i) for i, t in enumerate(types)]
