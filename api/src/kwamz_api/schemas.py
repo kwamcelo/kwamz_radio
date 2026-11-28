@@ -44,6 +44,8 @@ class CreateRadio(BaseModel):
 class RadioTrack(BaseModel):
     position: RadioPosition
     song: Song
+    liked: bool = Field(default=False, description="The current user has liked this song.")
+    banned: bool = Field(default=False, description="The current user has banned this song.")
 
 
 class Radio(BaseModel):

@@ -9,10 +9,25 @@ function reversedClientId(clientId: string): string {
 export default ({ config }: ConfigContext): ExpoConfig => {
   const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
   const base = config as ExpoConfig;
+  // Development against a plain-http server on the Mac (e.g. its Tailscale 100.x address,
+  // which iOS doesn't count as local) needs iOS to allow http. Builds pointed at an https
+  // API never get this.
+  const insecureDev = (process.env.EXPO_PUBLIC_API_URL ?? "").startsWith("http://");
   return {
     ...base,
-    // Signing team for local builds; from app/.env.local so it stays out of the repo.
-    ios: { ...base.ios, appleTeamId: process.env.APPLE_TEAM_ID || base.ios?.appleTeamId },
+    ios: {
+      ...base.ios,
+      // Signing team for local builds; from app/.env.local so it stays out of the repo.
+      appleTeamId: process.env.APPLE_TEAM_ID || base.ios?.appleTeamId,
+      ...(insecureDev && {
+        infoPlist: {
+          ...base.ios?.infoPlist,
+          // Only this key: iOS ignores NSAllowsArbitraryLoads when NSAllowsLocalNetworking
+          // is also set.
+          NSAppTransportSecurity: { NSAllowsArbitraryLoads: true },
+        },
+      }),
+    },
     plugins: [
       "expo-router",
       "expo-apple-authentication",

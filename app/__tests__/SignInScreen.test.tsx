@@ -6,6 +6,7 @@ import { SignInScreen } from "../src/screens/SignInScreen";
 function fakeAuth(overrides: Partial<Auth> = {}): Auth {
   return {
     status: "signedOut",
+    userId: null,
     methods: ["apple", "google"],
     signIn: jest.fn(async () => {}),
     signOut: jest.fn(async () => {}),

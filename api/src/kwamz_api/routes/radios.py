@@ -3,6 +3,7 @@ from uuid import UUID
 
 import psycopg
 from fastapi import HTTPException, Query, Request, status
+from psycopg import sql
 
 from kwamz_api.auth import UserId
 from kwamz_api.db import Conn
@@ -124,10 +125,20 @@ def _load_radios(
         ([r[0] for r in radios],),
     ).fetchall()
     songs = get_songs(conn, {r[1] for r in radios} | {t[2] for t in tracks})
+    track_ids = list({t[2] for t in tracks})
+    liked = _user_songs(conn, "likes", user_id, track_ids)
+    banned = _user_songs(conn, "bans", user_id, track_ids)
 
     by_radio: dict[UUID, list[RadioTrack]] = {r[0]: [] for r in radios}
     for rid, position, song_id in tracks:
-        by_radio[rid].append(RadioTrack(position=position, song=songs[song_id]))
+        by_radio[rid].append(
+            RadioTrack(
+                position=position,
+                song=songs[song_id],
+                liked=song_id in liked,
+                banned=song_id in banned,
+            )
+        )
     return [
         Radio(
             id=rid,
@@ -140,3 +151,16 @@ def _load_radios(
         )
         for rid, seed_id, parent_id, model_version, seed_strategy, created_at in radios
     ]
+
+
+def _user_songs(
+    conn: psycopg.Connection, table: str, user_id: UUID, song_ids: list[SongId]
+) -> set[SongId]:
+    """Which of these songs the user has in `likes` or `bans`."""
+    rows = conn.execute(
+        sql.SQL("select song_id from {} where user_id = %s and song_id = any(%s)").format(
+            sql.Identifier(table)
+        ),
+        (user_id, song_ids),
+    ).fetchall()
+    return {r[0] for r in rows}

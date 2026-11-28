@@ -3,7 +3,7 @@ import uuid
 
 import psycopg
 import pytest
-from psycopg import errors
+from psycopg import errors, sql
 
 EXPECTED_TABLES = {
     "users",
@@ -187,3 +187,27 @@ def test_service_role_bypasses_rls(conn: psycopg.Connection) -> None:
     conn.execute("set local role service_role")
     count = conn.execute("select count(*) from events where user_id = any(%s)", (users,)).fetchone()
     assert count == (2,)
+
+
+@pytest.mark.parametrize("table", ["likes", "bans"])
+def test_user_only_sees_and_changes_own_likes_and_bans(
+    conn: psycopg.Connection, table: str
+) -> None:
+    t = sql.Identifier(table)
+    insert = sql.SQL("insert into {} (user_id, song_id) values (%s, %s)").format(t)
+    user_a, user_b = make_user(conn), make_user(conn)
+    song = make_song(conn)
+    for user in (user_a, user_b):
+        conn.execute(insert, (user, song))
+
+    act_as(conn, user_a)
+    assert conn.execute(sql.SQL("select user_id from {}").format(t)).fetchall() == [(user_a,)]
+    conn.execute(sql.SQL("delete from {} where user_id = %s").format(t), (user_b,))  # no-op
+    with pytest.raises(errors.InsufficientPrivilege), conn.transaction():  # savepoint
+        conn.execute(insert, (user_b, song))
+
+    conn.execute("reset role")
+    count = conn.execute(
+        sql.SQL("select count(*) from {} where user_id = %s").format(t), (user_b,)
+    ).fetchone()
+    assert count == (1,)

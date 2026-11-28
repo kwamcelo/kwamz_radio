@@ -1,24 +1,43 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import type { Radio, Song } from "../api/client";
 import { describeError, useApi } from "../api/context";
+import { LibraryWarning } from "../components/LibraryWarning";
 import { Screen } from "../components/Screen";
 import { SongRow } from "../components/SongRow";
+import { TrackActions } from "../components/TrackActions";
+import { useEvents } from "../events/context";
 import { usePlayer, usePlayerState } from "../player/context";
 import { PlayerUnavailable } from "../player/types";
+import { useFeedback } from "./useFeedback";
 
-type Props = { radioId: string; onBack?: () => void };
+type Props = {
+  radioId: string;
+  onBack?: () => void;
+  /** Open another radio (after "Start radio from this"). */
+  onOpenRadio?: (radioId: string) => void;
+};
 
-export function RadioScreen({ radioId, onBack }: Props) {
+export function RadioScreen({ radioId, onBack, onOpenRadio }: Props) {
   const api = useApi();
   const player = usePlayer();
+  const { tracker } = useEvents();
   const { status, songId } = usePlayerState(player);
   const [radio, setRadio] = useState<Radio | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [playError, setPlayError] = useState<string | null>(null);
   /** Songs the player accepted; null until the queue is loaded. */
   const [playable, setPlayable] = useState<Set<string> | null>(null);
+  const feedback = useFeedback(radio);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,8 +61,11 @@ export function RadioScreen({ radioId, onBack }: Props) {
     setPlayError(null);
     try {
       const songs: Song[] = radio.tracks.map((t) => t.song);
+      tracker.markSkip(); // whatever was playing is being replaced from the app
+      tracker.begin(radio);
       const loaded = await player.load(songs, index);
       setPlayable(new Set(loaded.map((s) => s.id)));
+      tracker.loaded(loaded);
       if (loaded.length === 0) {
         setPlayError("None of these songs can play on Apple Music here.");
         return;
@@ -67,9 +89,32 @@ export function RadioScreen({ radioId, onBack }: Props) {
 
   async function next() {
     try {
+      tracker.markSkip();
       await player.next();
     } catch {
       setPlayError("Couldn't skip. Try again.");
+    }
+  }
+
+  function showOptions(song: Song) {
+    Alert.alert(song.title, song.artist, [
+      { text: "Start radio from this", onPress: () => startRadioFrom(song) },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  }
+
+  async function startRadioFrom(song: Song) {
+    setPlayError(null);
+    try {
+      const { data, response } = await api.POST("/radios", { body: { seed_song_id: song.id } });
+      if (!data) {
+        setPlayError(describeError(response.status, "Couldn't make a radio from that song."));
+        return;
+      }
+      feedback.logAbout("start_radio_from", song);
+      onOpenRadio?.(data.id);
+    } catch {
+      setPlayError(describeError(undefined, ""));
     }
   }
 
@@ -95,6 +140,7 @@ export function RadioScreen({ radioId, onBack }: Props) {
   }
 
   const playing = status === "playing";
+  const error = playError ?? feedback.error;
   return (
     <Screen left={back}>
       <View style={styles.header}>
@@ -129,9 +175,9 @@ export function RadioScreen({ radioId, onBack }: Props) {
             <Text style={styles.secondaryText}>Next</Text>
           </Pressable>
         </View>
-        {playError && (
+        {error && (
           <Text style={styles.error} accessibilityRole="alert">
-            {playError}
+            {error}
           </Text>
         )}
       </View>
@@ -139,15 +185,39 @@ export function RadioScreen({ radioId, onBack }: Props) {
         data={radio.tracks}
         keyExtractor={(t) => String(t.position)}
         initialNumToRender={radio.tracks.length}
-        renderItem={({ item, index }) => (
-          <SongRow
-            testID={`track-${item.position}`}
-            song={item.song}
-            active={item.song.id === songId}
-            disabled={playable !== null && !playable.has(item.song.id)}
-            onPress={() => playFrom(index)}
-          />
-        )}
+        renderItem={({ item, index }) => {
+          const { liked, banned } = feedback.flags(item.song);
+          return (
+            <SongRow
+              testID={`track-${item.position}`}
+              song={item.song}
+              active={item.song.id === songId}
+              disabled={playable !== null && !playable.has(item.song.id)}
+              muted={banned}
+              onPress={() => playFrom(index)}
+              onLongPress={() => showOptions(item.song)}
+              accessory={
+                <TrackActions
+                  testID={`track-${item.position}`}
+                  title={item.song.title}
+                  liked={liked}
+                  banned={banned}
+                  added={feedback.added(item.song)}
+                  onLike={() => feedback.toggleLike(item.song)}
+                  onUnlike={() => feedback.toggleLike(item.song)}
+                  onBan={() => feedback.toggleBan(item.song)}
+                  onUnban={() => feedback.toggleBan(item.song)}
+                  onAdd={() => feedback.requestAdd(item.song)}
+                />
+              }
+            />
+          );
+        }}
+      />
+      <LibraryWarning
+        visible={feedback.confirming !== null}
+        onCancel={feedback.cancelAdd}
+        onConfirm={feedback.confirmAdd}
       />
     </Screen>
   );

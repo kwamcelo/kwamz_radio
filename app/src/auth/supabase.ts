@@ -105,6 +105,7 @@ export function useSupabaseAuth(): Auth {
   return useMemo<Auth>(
     () => ({
       status: session === undefined ? "loading" : session ? "signedIn" : "signedOut",
+      userId: session?.user.id ?? null,
       methods: [
         ...(appleAvailable ? (["apple"] as const) : []),
         ...(googleConfigured ? (["google"] as const) : []),

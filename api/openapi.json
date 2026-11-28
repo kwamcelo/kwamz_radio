@@ -285,6 +285,18 @@
       },
       "RadioTrack": {
         "properties": {
+          "banned": {
+            "default": false,
+            "description": "The current user has banned this song.",
+            "title": "Banned",
+            "type": "boolean"
+          },
+          "liked": {
+            "default": false,
+            "description": "The current user has liked this song.",
+            "title": "Liked",
+            "type": "boolean"
+          },
           "position": {
             "$ref": "#/components/schemas/RadioPosition"
           },
